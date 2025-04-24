@@ -1,401 +1,546 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import injuryData from '../Data/data.json';
+import React, { useState, useRef } from 'react';
+import { Upload, FileText, Send, Briefcase, CheckCircle, Volume2 } from 'lucide-react';
 
-const Icons = {
-  Description: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-      <polyline points="14 2 14 8 20 8"></polyline>
-      <line x1="16" y1="13" x2="8" y2="13"></line>
-      <line x1="16" y1="17" x2="8" y2="17"></line>
-      <polyline points="10 9 9 9 8 9"></polyline>
-    </svg>
-  ),
-  Solution: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-    </svg>
-  ),
-  Close: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-  )
-};
+const GEMINI_API_KEY = "AIzaSyDYkEfit-LZ6afs61_PS8YM6Jaws-Ztf1s"; 
 
-const Injury = () => {
-  const [injuries, setInjuries] = useState([]);
-  const [visibleSection, setVisibleSection] = useState(null);
-  const [activeCard, setActiveCard] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const cardRefs = useRef({});
+const EnhanceResume = () => {
+  const [file, setFile] = useState(null);
+  const [fileContent, setFileContent] = useState(null);
+  const [jobDescription, setJobDescription] = useState('');
+  const [step, setStep] = useState(1);
+  const [selectedAction, setSelectedAction] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState('');
+  const [isReading, setIsReading] = useState(false);
+  const fileInputRef = useRef(null);
+  const speechSynthesisRef = useRef(null);
 
-  
-  useEffect(() => {
-   
-    const categorizedData = injuryData.map(injury => ({
-      ...injury,
-      category: injury.category || getRandomCategory()
-    }));
-    setInjuries(categorizedData);
-  }, []);
+  const actions = [
+    { id: 'ats-score', label: 'Get ATS Score', description: 'Calculate how well your resume might perform in ATS systems' },
+    { id: 'ats-enhancer', label: 'ATS Enhancer', description: 'Get specific suggestions to make your resume more ATS-friendly' },
+    { id: 'resume-feedback', label: 'Resume Feedback', description: 'Receive detailed feedback on each section of your resume' },
+    { id: 'keyword-match', label: 'Match Keywords', description: 'See how your resume keywords match with the job description' }
+  ];
 
- 
-  useEffect(() => {
-    if (activeCard !== null && cardRefs.current[activeCard]) {
-      cardRefs.current[activeCard].scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-      });
-    }
-  }, [activeCard]);
-
-  const getRandomCategory = () => {
-    const categories = ['Sports', 'Workplace', 'Home', 'Exercise'];
-    return categories[Math.floor(Math.random() * categories.length)];
-  };
-
-  const handleButtonClick = (section, index) => {
-    if (visibleSection === section) {
-      setVisibleSection(null);
-      setActiveCard(null);
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile && selectedFile.type === 'application/pdf') {
+      setFile(selectedFile);
+      const reader = new FileReader();
+      
+      reader.onload = async (event) => {
+        setFileContent(event.target.result);
+      };
+      
+      reader.readAsArrayBuffer(selectedFile);
     } else {
-      setVisibleSection(section);
-      setActiveCard(index);
+      alert('Please select a PDF file');
     }
   };
 
-  const getAllCategories = () => {
-    const categories = injuries.map(injury => injury.category);
-    return ['All', ...new Set(categories)];
+  const handleActionSelect = (actionId) => {
+    setSelectedAction(actionId);
   };
 
-  const filteredInjuries = injuries.filter(injury => {
-    const matchesSearch = injury.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      injury.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || injury.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const extractBasicInfo = (pdfText) => {
+    const nameMatch = pdfText.match(/^([A-Z][a-z]+ [A-Z][a-z]+)/m) || 
+                      pdfText.match(/([A-Z][a-z]+ [A-Z][a-z]+)\n/);
+    const name = nameMatch ? nameMatch[1] : "professional";
+    
+    const jobTitleMatch = pdfText.match(/\n((?:Senior|Junior|Lead)?\s?[A-Za-z]+ (?:Developer|Engineer|Designer|Manager|Specialist|Analyst|Consultant))/m);
+    const jobTitle = jobTitleMatch ? jobTitleMatch[1] : "";
+    
+    const yearsExpMatch = pdfText.match(/([0-9]+)\+?\s?years of experience/i);
+    const yearsExperience = yearsExpMatch ? yearsExpMatch[1] : "";
+
+    return {
+      name,
+      jobTitle,
+      yearsExperience
+    };
+  };
+
+  const processWithGemini = async () => {
+    setIsLoading(true);
+    
+    try {
+      const pdfText = await extractTextFromPDF(fileContent);
+      const basicInfo = extractBasicInfo(pdfText);
+      
+      let promptText = '';
+      
+      if (selectedAction === 'ats-score') {
+        promptText = `I need analysis for a resume based on a job description.
+        
+        ACTION: ATS Score
+        
+        RESUME CONTENT:
+        ${pdfText}
+        
+        JOB DESCRIPTION:
+        ${jobDescription}
+        
+        Provide a detailed ATS compatibility score analysis in markdown format.
+        Include a score out of 100 with breakdowns for different aspects like keyword matching, 
+        format compatibility, section organization, and overall readability.
+        Do not include any other analysis besides the ATS score.`;
+      } else if (selectedAction === 'ats-enhancer') {
+        promptText = `I need personalized analysis for ${basicInfo.name}'s resume based on a job description.
+        
+        RESUME CONTENT:
+        ${pdfText}
+        
+        JOB DESCRIPTION:
+        ${jobDescription}
+        
+        First, provide a personalized greeting that includes the person's name (${basicInfo.name}) and a brief
+        summary of what you've understood about them from their resume (e.g., their experience level, current role,
+        industry, key strengths, etc.).
+        
+        Then, provide an ATS compatibility score out of 100 with a brief breakdown.
+        
+        Next, provide specific recommendations to enhance the resume's ATS compatibility. Include:
+        1. Format improvements to make the resume more ATS-friendly
+        2. Content enhancements including missing keywords from the job description, personalized to their background
+        3. Section-by-section recommendations that reference their specific experiences and skills
+        
+        Throughout your analysis, refer to them by name and make connections between their background and the job requirements.
+        
+        Present your analysis in markdown format.`;
+      } else if (selectedAction === 'resume-feedback') {
+        promptText = `I need personalized feedback for ${basicInfo.name}'s resume based on a job description.
+        
+        RESUME CONTENT:
+        ${pdfText}
+        
+        JOB DESCRIPTION:
+        ${jobDescription}
+        
+        First, provide a personalized greeting that includes the person's name (${basicInfo.name}) and a brief
+        summary of what you've understood about them from their resume (their background, experience level, 
+        key skills, career trajectory, etc.).
+        
+        Then, provide an ATS compatibility score out of 100 with a brief breakdown.
+        
+        Next, provide detailed section-by-section feedback on the resume. For each section (Contact Information, 
+        Professional Summary, Work Experience, Skills, Education, etc.), include strengths (marked with ✅) 
+        and improvement areas (marked with ⚠️). Make this feedback specific to their actual experiences and skills,
+        not generic advice.
+        
+        Throughout your analysis, refer to them by name and make specific references to their background, using details
+        from their resume to personalize the feedback.
+        
+        Present your analysis in markdown format.`;
+      } else if (selectedAction === 'keyword-match') {
+        promptText = `I need analysis for a resume based on a job description.
+        
+        RESUME CONTENT:
+        ${pdfText}
+        
+        JOB DESCRIPTION:
+        ${jobDescription}
+        
+        First, provide an ATS compatibility score out of 100 with a brief breakdown.
+        
+        Then, analyze how well the resume's keywords match with the job description. Include:
+        1. A table showing key terms from the job description and whether they appear in the resume
+        2. Missing keywords that should be added
+        3. Recommendations for keyword placement
+        4. Overall keyword match score as a percentage
+        
+        Present your analysis in markdown format.
+        Do not include any other analysis besides the ATS score and keyword matching analysis.`;
+      }
+      
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_API_KEY
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: promptText
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
+          }
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+        setResult(data.candidates[0].content.parts[0].text);
+      } else {
+        throw new Error('Invalid response from Gemini API');
+      }
+      
+      setStep(4);
+    } catch (error) {
+      console.error("Error processing with Gemini API:", error);
+      setResult("Sorry, there was an error processing your request. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const extractTextFromPDF = async (pdfBuffer) => {
+    try {
+      // In a real implementation, you would extract text from the PDF
+      // This is a placeholder that simulates a resume for a software developer
+      return `Jane Smith
+123 Main Street, San Francisco, CA 94105
+jane.smith@email.com | (555) 123-4567 | linkedin.com/in/janesmith
+
+SOFTWARE ENGINEER
+Innovative Software Engineer with 5+ years of experience in full-stack development and cloud solutions.
+Passionate about creating efficient, scalable applications using modern technologies.
+
+SKILLS
+Programming Languages: JavaScript, TypeScript, Python, Java, SQL
+Frameworks & Libraries: React, Node.js, Express, Django, Spring Boot
+Cloud & DevOps: AWS, Docker, Kubernetes, CI/CD, Terraform
+Databases: MongoDB, PostgreSQL, MySQL, Redis
+Other: RESTful APIs, GraphQL, Microservices, Agile/Scrum
+
+EXPERIENCE
+Senior Software Engineer | TechCorp Inc., San Francisco, CA | 2020 - Present
+- Architected and implemented scalable microservices using Node.js and Kubernetes
+- Led migration from monolithic architecture to microservices, reducing deployment time by 70%
+- Mentored junior developers and conducted code reviews to ensure quality and best practices
+- Implemented CI/CD pipelines using Jenkins, reducing release cycles by 40%
+
+Software Developer | InnoSoft Solutions, San Francisco, CA | 2018 - 2020
+- Developed responsive web applications using React and Redux
+- Built and maintained RESTful APIs using Express and MongoDB
+- Collaborated with UI/UX designers to implement intuitive user interfaces
+- Optimized database queries, improving application performance by 35%
+
+Junior Developer | CodeWave Technologies, Oakland, CA | 2016 - 2018
+- Assisted in developing and maintaining e-commerce platforms
+- Implemented front-end features using JavaScript and jQuery
+- Fixed bugs and performed code refactoring to improve maintainability
+- Participated in daily stand-ups and sprint planning meetings
+
+EDUCATION
+Bachelor of Science in Computer Science | University of California, Berkeley | 2016
+- GPA: 3.8/4.0
+- Relevant coursework: Data Structures, Algorithms, Database Systems, Web Development
+
+PROJECTS
+Personal Budget Tracker
+- Developed a full-stack application using MERN stack (MongoDB, Express, React, Node.js)
+- Implemented user authentication, data visualization, and expense categorization
+
+Weather Forecast App
+- Created a responsive web app using React that displays weather forecasts
+- Integrated with OpenWeatherMap API and implemented geolocation services
+
+CERTIFICATIONS
+- AWS Certified Developer - Associate (2022)
+- MongoDB Certified Developer (2021)
+- Google Cloud Professional Developer (2020)`;
+    } catch (error) {
+      console.error("Error extracting text from PDF:", error);
+      throw new Error("Failed to extract text from the PDF");
+    }
+  };
+
+  const resetForm = () => {
+    setFile(null);
+    setFileContent(null);
+    setJobDescription('');
+    setStep(1);
+    setSelectedAction('');
+    setResult('');
+    setIsReading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (speechSynthesisRef.current) {
+      window.speechSynthesis.cancel();
+      speechSynthesisRef.current = null;
+    }
+  };
+
+  const goToJobDescription = () => {
+    if (file) {
+      setStep(2);
+    } else {
+      alert('Please upload a resume first');
+    }
+  };
+
+  const goToOptions = () => {
+    if (jobDescription.trim()) {
+      setStep(3);
+    } else {
+      alert('Please enter a job description');
+    }
+  };
+  
+  const readText = () => {
+    if (isReading) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+      speechSynthesisRef.current = null;
+      return;
+    }
+    
+    const plainText = result
+      .replace(/#{1,6} (.*)/g, '$1. ') 
+      .replace(/\*\*(.*?)\*\*/g, '$1') 
+      .replace(/\*(.*?)\*/g, '$1')     
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1') 
+      .replace(/`(.*?)`/g, '$1')      
+      .replace(/```.*?```/gs, '')     
+      .replace(/\n/g, ' ')             
+      .replace(/\s+/g, ' ')            
+      .replace(/✅/g, 'Strength: ')    
+      .replace(/⚠️/g, 'Area for improvement: '); 
+    
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    // Select a voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(voice => voice.name.includes('Female') || voice.name.includes('Google'));
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+    
+    utterance.onend = () => {
+      setIsReading(false);
+      speechSynthesisRef.current = null;
+    };
+    
+    window.speechSynthesis.speak(utterance);
+    speechSynthesisRef.current = utterance;
+    setIsReading(true);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-950 to-gray-900 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-   
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12 relative overflow-hidden rounded-3xl p-8 md:p-12 bg-gradient-to-br from-purple-900/50 to-gray-900/90 shadow-xl"
-        >
-          
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full filter blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full filter blur-3xl"></div>
+    <div className="w-full max-w-4xl mx-auto p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-2xl">
+      <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        Resume Assistant
+      </h2>
+      
+      <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center w-full max-w-2xl">
+          {[1, 2, 3, 4].map((stepNumber) => (
+            <React.Fragment key={stepNumber}>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ${
+                step >= stepNumber 
+                  ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-500'
+              }`}>
+                {stepNumber}
+              </div>
+              {stepNumber < 4 && (
+                <div className={`flex-1 h-1 mx-2 transition-all duration-300 ${
+                  step > stepNumber 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600'
+                    : 'bg-gray-200'
+                }`}></div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      
+      {step === 1 && (
+        <div className="flex flex-col items-center">
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 w-full max-w-md text-center bg-white hover:border-blue-500 transition-all duration-300">
+            <input
+              type="file"
+              onChange={handleFileChange}
+              accept=".pdf"
+              className="hidden"
+              ref={fileInputRef}
+              id="resume-upload"
+            />
+            <label 
+              htmlFor="resume-upload" 
+              className="cursor-pointer flex flex-col items-center justify-center"
+            >
+              {file ? (
+                <>
+                  <FileText size={48} className="text-blue-500 mb-4" />
+                  <p className="text-gray-800 font-medium">{file.name}</p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Upload size={48} className="text-gray-400 mb-4" />
+                  <p className="text-gray-800 font-medium">Upload your resume</p>
+                  <p className="text-gray-500 text-sm mt-2">PDF files only</p>
+                </>
+              )}
+            </label>
           </div>
           
-          <motion.h1 
-            className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-blue-400 mb-6 relative z-10"
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ 
-              duration: 0.5,
-              type: "spring",
-              stiffness: 100
-            }}
+          <button
+            onClick={goToJobDescription}
+            className={`mt-8 px-8 py-3 rounded-xl font-medium transition-all duration-300 ${
+              file
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+            disabled={!file}
           >
-            Injury Solutions
-          </motion.h1>
+            Next
+          </button>
+        </div>
+      )}
+      
+      {step === 2 && (
+        <div className="flex flex-col items-center">
+          <div className="w-full max-w-lg bg-white p-8 rounded-xl shadow-lg">
+            <h3 className="text-2xl font-semibold mb-4 text-gray-800">Enter Job Description</h3>
+            <p className="text-gray-600 mb-6">
+              Paste the job description to help us provide more tailored analysis and recommendations.
+            </p>
+            
+            <div className="relative">
+              <Briefcase className="absolute top-3 left-3 text-gray-400" size={20} />
+              <textarea
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Paste job description here..."
+                className="w-full h-64 p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+            </div>
+          </div>
           
-          <motion.p 
-            className="text-gray-300 text-lg max-w-2xl mx-auto mb-8 relative z-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            Interactive guide to help you understand, manage, and recover from common injuries with professional advice.
-          </motion.p>
-        
-          <motion.div 
-            className="relative max-w-md mx-auto mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <input
-              type="text"
-              placeholder="Search injuries..."
-              className="w-full px-6 py-3 bg-gray-800/70 border border-purple-500/30 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 shadow-lg"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <svg 
-              className="absolute right-4 top-3.5 text-gray-400" 
-              width="20" 
-              height="20" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
+          <div className="flex gap-4 mt-8">
+            <button
+              onClick={() => setStep(1)}
+              className="px-8 py-3 rounded-xl font-medium border border-gray-300 hover:bg-gray-50 transition-all duration-300"
             >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </motion.div>
+              Back
+            </button>
+            
+            <button
+              onClick={goToOptions}
+              className={`px-8 py-3 rounded-xl font-medium transition-all duration-300 ${
+                jobDescription.trim()
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+              disabled={!jobDescription.trim()}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {step === 3 && (
+        <div className="flex flex-col items-center">
+          <h3 className="text-2xl font-semibold mb-6 text-gray-800">What would you like to do with your resume?</h3>
           
-  
-          <motion.div 
-            className="flex flex-wrap justify-center gap-3 relative z-10"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            {getAllCategories().map((category, index) => (
+          <div className="grid gap-4 w-full max-w-lg">
+            {actions.map((action) => (
               <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  selectedCategory === category
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                    : 'bg-gray-800/70 text-gray-300 hover:bg-gray-700'
+                key={action.id}
+                onClick={() => handleActionSelect(action.id)}
+                className={`p-6 rounded-xl border-2 text-left transition-all duration-300 ${
+                  selectedAction === action.id
+                    ? 'border-blue-500 bg-blue-50 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >
-                {category}
+                <div className="font-medium mb-1 text-gray-800">{action.label}</div>
+                <div className="text-sm text-gray-600">{action.description}</div>
               </button>
             ))}
-          </motion.div>
-        </motion.div>
-
-        <motion.div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-        >
-          <div className="bg-gray-800/50 rounded-xl p-4 border-t border-purple-500/20 shadow-lg backdrop-blur-sm">
-            <h3 className="text-3xl md:text-4xl font-bold text-white mb-1">{injuries.length}</h3>
-            <p className="text-purple-300 text-sm">Injuries Covered</p>
           </div>
-          <div className="bg-gray-800/50 rounded-xl p-4 border-t border-blue-500/20 shadow-lg backdrop-blur-sm">
-            <h3 className="text-3xl md:text-4xl font-bold text-white mb-1">100%</h3>
-            <p className="text-blue-300 text-sm">Medically Reviewed</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-xl p-4 border-t border-pink-500/20 shadow-lg backdrop-blur-sm">
-            <h3 className="text-3xl md:text-4xl font-bold text-white mb-1">24/7</h3>
-            <p className="text-pink-300 text-sm">Access Anytime</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-xl p-4 border-t border-emerald-500/20 shadow-lg backdrop-blur-sm">
-            <h3 className="text-3xl md:text-4xl font-bold text-white mb-1">5k+</h3>
-            <p className="text-emerald-300 text-sm">Recoveries Helped</p>
-          </div>
-        </motion.div>
-
-        {filteredInjuries.length === 0 && (
-          <motion.div 
-            className="text-center py-12 bg-gray-800/30 rounded-2xl mb-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <h3 className="text-2xl text-gray-400 mb-4">No injuries found matching your search</h3>
-            <button 
-              onClick={() => {setSearchTerm(''); setSelectedCategory('All');}}
-              className="px-6 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
+          
+          <div className="flex gap-4 mt-8">
+            <button
+              onClick={() => setStep(2)}
+              className="px-8 py-3 rounded-xl font-medium border border-gray-300 hover:bg-gray-50 transition-all duration-300"
             >
-              Clear Filters
+              Back
             </button>
-          </motion.div>
-        )}
-
-
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          layout
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.7, staggerChildren: 0.1 }}
-        >
-          {filteredInjuries.map((injury, index) => (
-            <motion.div
-              key={index}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-              ref={el => cardRefs.current[index] = el}
-              className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
-                activeCard === index 
-                  ? 'bg-gradient-to-br from-gray-800/90 to-gray-900/95 shadow-xl shadow-purple-500/20 scale-105 z-10' 
-                  : 'bg-gray-800/60 hover:bg-gray-800/80 shadow-lg backdrop-blur-sm'
+            
+            <button
+              onClick={processWithGemini}
+              disabled={!selectedAction || isLoading}
+              className={`px-8 py-3 rounded-xl font-medium flex items-center gap-2 transition-all duration-300 ${
+                selectedAction && !isLoading
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
               }`}
             >
-             
-              <div className="absolute top-4 right-4 px-3 py-1 bg-purple-900/70 rounded-full text-xs font-medium text-purple-200">
-                {injury.category}
-              </div>
-
-              <motion.div 
-                className="px-6 pt-6 pb-4"
-                layout
-              >
-                <motion.div 
-                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600/20 to-purple-900/40 flex items-center justify-center mb-4 mx-auto transition-all duration-500 ${
-                    activeCard === index ? 'scale-110' : ''
-                  }`}
-                  layout
-                >
-                  <span className="text-purple-300 text-2xl font-bold">{index + 1}</span>
-                </motion.div>
-                
-                <motion.h2 
-                  className="text-2xl font-bold text-white text-center mb-4"
-                  layout
-                >
-                  {injury.name}
-                </motion.h2>
-                
-                <motion.div 
-                  className="h-1 w-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mx-auto mb-4 opacity-60"
-                  layout
-                />
-              </motion.div>
-
-              <motion.div 
-                className="flex justify-center space-x-3 px-6 pb-6"
-                layout
-              >
-                <button
-                  onClick={() => handleButtonClick(`description-${index}`, index)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    visibleSection === `description-${index}`
-                      ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-600/30'
-                      : 'bg-gray-700 text-purple-300 hover:bg-purple-800/50'
-                  }`}
-                >
-                  <Icons.Description />
-                  Description
-                </button>
-                <button
-                  onClick={() => handleButtonClick(`solution-${index}`, index)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    visibleSection === `solution-${index}`
-                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-600/30'
-                      : 'bg-gray-700 text-emerald-300 hover:bg-emerald-800/50'
-                  }`}
-                >
-                  <Icons.Solution />
-                  Solution
-                </button>
-              </motion.div>
-              <AnimatePresence>
-                {visibleSection === `description-${index}` && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="px-6 pb-6"
-                  >
-                    <div className="bg-gray-900/70 rounded-xl p-5 border-l-4 border-purple-500 shadow-inner relative overflow-hidden">
-               
-                      <button 
-                        onClick={() => setVisibleSection(null)}
-                        className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-gray-800/80 text-gray-400 hover:text-white hover:bg-gray-700/80 transition-colors"
-                      >
-                        <Icons.Close />
-                      </button>
-                      
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl"></div>
-                      <p className="text-gray-300 text-sm leading-relaxed">
-                        <span className="text-purple-400 font-medium block mb-2 text-base">Description:</span> 
-                        {injury.description}
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-                
-                {visibleSection === `solution-${index}` && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="px-6 pb-6"
-                  >
-                    <div className="bg-gray-900/70 rounded-xl p-5 border-l-4 border-emerald-500 shadow-inner relative overflow-hidden">
-                 
-                      <button 
-                        onClick={() => setVisibleSection(null)}
-                        className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-gray-800/80 text-gray-400 hover:text-white hover:bg-gray-700/80 transition-colors"
-                      >
-                        <Icons.Close />
-                      </button>
-                      
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl"></div>
-                      <p className="text-emerald-200 text-sm leading-relaxed">
-                        <span className="text-emerald-400 font-medium block mb-2 text-base">Solution:</span> 
-                        {injury.solution}
-                      </p>
-                      
-                      
-                      {injury.recoveryTime && (
-                        <div className="mt-4 pt-4 border-t border-gray-700/50">
-                          <h4 className="text-emerald-400 font-medium mb-2">Recovery Timeline:</h4>
-                          <div className="flex items-center">
-                            <div className="w-full bg-gray-700/50 rounded-full h-2">
-                              <div className="bg-gradient-to-r from-emerald-500 to-emerald-300 h-2 rounded-full" style={{ width: `${Math.min(100, injury.recoveryTime || Math.floor(Math.random() * 30) + 20)}%` }}></div>
-                            </div>
-                            <span className="ml-3 text-emerald-200 text-xs whitespace-nowrap">{injury.recoveryTime || Math.floor(Math.random() * 10) + 1}-{Math.floor(Math.random() * 10) + 10} days</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-purple-500/10 to-pink-500/5 rounded-bl-full"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-500/10 to-purple-500/5 rounded-tr-full"></div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        <motion.div 
-          className="mt-20 mb-16 p-8 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 backdrop-blur-sm text-center relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full filter blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/5 rounded-full filter blur-3xl"></div>
-          </div>
-          
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 relative z-10">
-            Stay Informed with Latest Recovery Techniques
-          </h3>
-          <p className="text-gray-300 max-w-xl mx-auto mb-6 relative z-10">
-            Subscribe to our newsletter for expert advice, recovery tips, and updates on injury prevention.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto relative z-10">
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="flex-1 px-6 py-3 bg-gray-800/70 border border-purple-500/30 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-            />
-            <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-white font-medium hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg shadow-purple-600/20">
-              Subscribe
+              {isLoading ? 'Processing...' : 'Analyze Resume'}
+              {!isLoading && <Send size={18} />}
             </button>
           </div>
-        </motion.div>
-        
-      </div>
+        </div>
+      )}
+      
+      {step === 4 && (
+        <div className="flex flex-col items-center">
+          <h3 className="text-2xl font-semibold mb-6 text-gray-800">Analysis Results</h3>
+          
+          <div className="flex justify-end w-full mb-2">
+            <button
+              onClick={readText}
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                isReading 
+                  ? 'bg-red-500 text-white hover:bg-red-600 shadow-md'
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-md'
+              }`}
+            >
+              <Volume2 size={16} />
+              {isReading ? 'Stop Reading' : 'Read Aloud'}
+            </button>
+          </div>
+          
+          <div className="bg-white p-8 rounded-xl border border-gray-200 w-full mb-8 prose max-w-none shadow-lg">
+            <div dangerouslySetInnerHTML={{ 
+              __html: result.replace(/^# (.*$)/gm, '<h2 class="text-2xl font-bold text-gray-800">$1</h2>')
+                          .replace(/^## (.*$)/gm, '<h3 class="text-xl font-semibold text-gray-800">$1</h3>')
+                          .replace(/^### (.*$)/gm, '<h4 class="text-lg font-medium text-gray-800">$1</h4>')
+                          .replace(/\n/g, '<br>')
+                          .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+                          .replace(/✅/g, '<span class="text-green-500">✅</span>')
+                          .replace(/⚠️/g, '<span class="text-yellow-500">⚠️</span>')
+                          .replace(/❌/g, '<span class="text-red-500">❌</span>')
+            }} />
+          </div>
+          
+          <div className="flex gap-4">
+            <button
+              onClick={() => setStep(3)}
+              className="px-8 py-3 rounded-xl font-medium border border-gray-300 hover:bg-gray-50 transition-all duration-300"
+            >
+              Try Another Action
+            </button>
+            
+            <button
+              onClick={resetForm}
+              className="px-8 py-3 rounded-xl font-medium bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg transition-all duration-300"
+            >
+              Start Over
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Injury;
+export default EnhanceResume;
