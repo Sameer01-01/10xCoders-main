@@ -45,9 +45,20 @@ function App() {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && e.ctrlKey) {
       handleNext();
     }
+  };
+
+  const formatResponseToRemoveMarkdown = (text) => {
+    // Replace markdown list markers with proper HTML formatting
+    return text
+      .replace(/\*\*\*/g, '<span class="font-bold italic">')
+      .replace(/\*\*/g, '<span class="font-bold">')
+      .replace(/\*/g, '• ')
+      .replace(/<\/span><\/span>/g, '</span>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br />');
   };
 
   const generateRecommendation = async (allResponses) => {
@@ -73,6 +84,8 @@ function App() {
         Response: ${allResponses[4]}
         
         Provide a detailed explanation (about 200-300 words) about why this career path is suitable for them based on their answers. Include specific skills they should develop, potential job roles they might enjoy, and learning resources they could explore. Make the recommendation personalized and constructive.
+        
+        IMPORTANT: Do not use asterisks (*) for formatting. Use plain text formatting only. For lists, use hyphen (-) or numbers instead.
       `;
 
       const result = await model.generateContent(prompt);
@@ -91,67 +104,145 @@ function App() {
     setRecommendation('');
   };
 
+  const renderRecommendation = () => {
+    const sections = recommendation.split(/(?=##)/g);
+    
+    return sections.map((section, index) => {
+      if (section.startsWith('##')) {
+        const title = section.split('\n')[0].replace('##', '').trim();
+        const content = section.split('\n').slice(1).join('\n').trim();
+        
+        return (
+          <div key={index} className="mb-4">
+            <h3 className="text-lg font-semibold text-indigo-800 mb-2">{title}</h3>
+            <div className="pl-2">
+              {content.split('\n').map((para, i) => {
+                if (para.trim().startsWith('-')) {
+                  return (
+                    <div key={i} className="flex items-start mb-1">
+                      <div className="text-indigo-600 mr-2 mt-1">•</div>
+                      <div>{para.replace('-', '').trim()}</div>
+                    </div>
+                  );
+                }
+                return <p key={i} className="mb-2">{para}</p>;
+              })}
+            </div>
+          </div>
+        );
+      }
+      
+      return (
+        <div key={index} className="mb-4">
+          {section.split('\n').map((para, i) => {
+            if (para.trim().startsWith('-')) {
+              return (
+                <div key={i} className="flex items-start mb-1">
+                  <div className="text-indigo-600 mr-2 mt-1">•</div>
+                  <div>{para.replace('-', '').trim()}</div>
+                </div>
+              );
+            }
+            return para.trim() ? <p key={i} className="mb-2">{para}</p> : null;
+          })}
+        </div>
+      );
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl">
-        <h1 className="text-2xl font-bold text-center text-indigo-700 mb-6">Tech Career Path Finder</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-2xl">
+        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-8">Tech Career Path Finder</h1>
         
         {!recommendation ? (
           <>
-            <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-500 mb-2">
-                <span>Question {currentStep + 1} of {questions.length}</span>
+            <div className="mb-8">
+              <div className="flex justify-between text-sm text-gray-600 mb-2">
+                <span className="font-medium">Question {currentStep + 1} of {questions.length}</span>
                 <span>{Math.round((currentStep / questions.length) * 100)}% Complete</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-3">
                 <div 
-                  className="bg-indigo-600 h-2 rounded-full transition-all duration-500" 
+                  className="bg-indigo-600 h-3 rounded-full transition-all duration-500" 
                   style={{ width: `${(currentStep / questions.length) * 100}%` }}
                 ></div>
               </div>
             </div>
             
-            <div className="mb-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-3">{questions[currentStep]}</h2>
+            <div className="mb-8">
+              <h2 className="text-xl font-medium text-gray-800 mb-4">{questions[currentStep]}</h2>
               <textarea
                 value={currentResponse}
                 onChange={(e) => setCurrentResponse(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-24"
-                placeholder="Type your answer here..."
+                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-32 shadow-sm"
+                placeholder="Type your answer here... Press Ctrl+Enter to continue"
               />
+              <div className="text-xs text-gray-500 mt-2 text-right">Press Ctrl+Enter to continue</div>
             </div>
             
-            <div className="flex justify-end">
-              <button
-                onClick={handleNext}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-300"
-              >
-                {currentStep < questions.length - 1 ? 'Next' : 'Get Recommendation'}
-              </button>
+            <div className="flex justify-between">
+              {currentStep > 0 && (
+                <button
+                  onClick={() => {
+                    setCurrentStep(currentStep - 1);
+                    setCurrentResponse(responses[currentStep - 1] || '');
+                  }}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors duration-300"
+                >
+                  Back
+                </button>
+              )}
+              <div className={currentStep > 0 ? '' : 'ml-auto'}>
+                <button
+                  onClick={handleNext}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-colors duration-300 shadow-md flex items-center"
+                >
+                  {currentStep < questions.length - 1 ? (
+                    <>Next<span className="ml-2">→</span></>
+                  ) : (
+                    <>Get Recommendation</>
+                  )}
+                </button>
+              </div>
             </div>
           </>
         ) : (
           <div className="recommendation-section">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-10">
+              <div className="flex flex-col items-center justify-center py-12">
                 <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="mt-4 text-gray-600">Analyzing your responses...</p>
+                <p className="mt-6 text-gray-600 font-medium">Analyzing your responses...</p>
               </div>
             ) : (
               <>
-                <h2 className="text-xl font-bold text-indigo-700 mb-4">Your Career Recommendation</h2>
-                <div className="bg-indigo-50 p-4 rounded-lg mb-6">
-                  <div className="whitespace-pre-line text-gray-800">
-                    {recommendation}
+                <div className="bg-indigo-100 p-1 rounded-lg mb-8">
+                  <div className="bg-white p-6 rounded-lg border-l-4 border-indigo-600">
+                    <h2 className="text-2xl font-bold text-indigo-800 mb-4">Your Career Recommendation</h2>
+                    <div className="text-gray-800 leading-relaxed">
+                      {renderRecommendation()}
+                    </div>
                   </div>
                 </div>
-                <div className="text-center">
+                <div className="flex justify-between">
                   <button
                     onClick={handleStartOver}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-300"
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors duration-300"
                   >
                     Start Over
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Here you would implement sharing or saving functionality
+                      alert("This would save or share your recommendation!");
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-300 shadow-md flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    Save Result
                   </button>
                 </div>
               </>

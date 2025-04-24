@@ -61,6 +61,24 @@ const Home = () => {
       bgColor: "bg-gradient-to-br from-yellow-50 to-lime-100",
       icon: <Bandage size={28} />,
       link: "/injury"
+    },
+    {
+      title: "Interview Prepration",
+      description: "Prevention tips and recovery guides",
+      color: "from-yellow-400 to-lime-500",
+      textColor: "text-yellow-950",
+      bgColor: "bg-gradient-to-br from-yellow-50 to-lime-100",
+      icon: <Bandage size={28} />,
+      link: "/interview"
+    },
+    {
+      title: "Typing Speed Enhancer",
+      description: "Custom nutrition for your goals",
+      color: "from-rose-400 to-pink-500",
+      textColor: "text-rose-950",
+      bgColor: "bg-gradient-to-br from-rose-50 to-rose-100", 
+      icon: <Salad size={28} />,
+      link: "/type"
     }
   ];
 
@@ -104,10 +122,10 @@ const Home = () => {
       
       <nav className="backdrop-blur-md bg-black/30 border-b border-white/10 p-4 px-6 md:px-10 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-4">
-          <img src={logo} className="w-12 md:w-16 lg:w-20" alt="FitVerse Logo" />
+          
           <div className="hidden md:block h-8 w-px bg-white/20" />
           <h1 className="hidden md:block text-xl lg:text-2xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
-            FitVerse
+            10xCoders
           </h1>
         </div>
         
