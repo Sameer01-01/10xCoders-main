@@ -9,6 +9,8 @@ import ResumePreview from "./components/ResumePreview";
 import AuthPage from "./components/Login";
 import InterviewPrep from "./components/Interview";
 import TypingTest from "./components/Typing";
+import MachineCode from "./components/CodingPractice";
+import KanbanBoard from "./components/KanBan";
 
 function App() {
   return (
@@ -16,14 +18,16 @@ function App() {
       <Routes>
         <Route path="/" element={<AuthPage />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/bmi" element={<Bmi />} />
-        <Route path="/diet" element={<Dietplans />} />
-        <Route path="/injury" element={<Injury />} />
-        <Route path="/exercise" element={<Exercise />} />
-        <Route path="/nutrition" element={<Nutrition />} />
+        <Route path="/courses" element={<Bmi />} />
+        <Route path="/roadmaps" element={<Dietplans />} />
+        <Route path="/enhance" element={<Injury />} />
+        <Route path="/career" element={<Exercise />} />
+        <Route path="/resume" element={<Nutrition />} />
         <Route path="/resume-preview" element={<ResumePreview />} />
         <Route path="/interview" element={<InterviewPrep />} />
         <Route path="/type" element={<TypingTest />} />
+        <Route path="/code" element={<MachineCode />} />
+        <Route path="/todo" element={<KanbanBoard />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,11 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
-import { motion } from "framer-motion";
-import { ArrowRight, Dumbbell, Salad, BarChart2, Brain, Bandage } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { 
+  ArrowRight, 
+  Code, 
+  BookOpen, 
+  BarChart2, 
+  Terminal, 
+  Cpu, 
+  Globe, 
+  MessageSquare, 
+  Menu, 
+  X, 
+  ChevronRight,
+  Github,
+  Twitter,
+  Linkedin
+} from "lucide-react";
 
 const Home = () => {
   const [scrollY, setScrollY] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const heroRef = useRef(null);
+  const navigate = useNavigate();
+  
+  // Parallax effect using framer-motion
+  const { scrollYProgress } = useScroll();
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.3]);
+  const heroY = useTransform(scrollYProgress, [0, 0.2], [0, -50]);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -16,71 +41,114 @@ const Home = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const categories = [
+    { id: "all", name: "All Tools" },
+    { id: "learn", name: "Learning" },
+    { id: "career", name: "Career" },
+    { id: "practice", name: "Practice" }
+  ];
+
   const cards = [
     {
-      title: "Career Agent",
-      description: "Find perfect routines for your fitness level",
-      color: "from-emerald-400 to-green-500",
-      textColor: "text-emerald-950",
-      bgColor: "bg-gradient-to-br from-emerald-50 to-emerald-100",
-      icon: <Dumbbell size={28} />,
-      link: "/exercise"
+      title: "Kanban Board",
+      description: "Organize your tasks and manage your projects efficiently",
+      color: "from-sky-400 to-blue-500",
+      textColor: "text-sky-800",
+      bgColor: "bg-gradient-to-br from-sky-50 to-blue-100",
+      icon: <Terminal size={28} />,
+      link: "/todo",
+      category: "practice",
+      popular: true
     },
     {
-      title: "Personalised Roadmaps",
-      description: "Custom nutrition for your goals",
-      color: "from-rose-400 to-pink-500",
-      textColor: "text-rose-950",
-      bgColor: "bg-gradient-to-br from-rose-50 to-rose-100", 
-      icon: <Salad size={28} />,
-      link: "/diet"
+      title: "Career Agent",
+      description: "Get personalized career advice and job matches",
+      color: "from-blue-400 to-indigo-500",
+      textColor: "text-blue-800",
+      bgColor: "bg-gradient-to-br from-blue-50 to-indigo-100",
+      icon: <Code size={28} />,
+      link: "/career",
+      category: "career",
+      new: true
+    },
+    {
+      title: "Personalized Roadmaps",
+      description: "Custom learning paths tailored to your specific career goals",
+      color: "from-purple-400 to-violet-500",
+      textColor: "text-purple-800",
+      bgColor: "bg-gradient-to-br from-purple-50 to-violet-100", 
+      icon: <BookOpen size={28} />,
+      link: "/roadmaps",
+      category: "learn"
     },
     {
       title: "Courses",
-      description: "Track your body mass index metrics",
-      color: "from-green-500 to-lime-500",
-      textColor: "text-green-950",
-      bgColor: "bg-gradient-to-br from-green-50 to-lime-100",
+      description: "Structured learning from beginner to advanced with expert instructors",
+      color: "from-indigo-500 to-blue-500",
+      textColor: "text-indigo-800",
+      bgColor: "bg-gradient-to-br from-indigo-50 to-blue-100",
       icon: <BarChart2 size={28} />,
-      link: "/bmi"
+      link: "/courses",
+      category: "learn",
+      popular: true
     },
     {
       title: "Resume Maker",
-      description: "Get personalized nutrition advice",
-      color: "from-blue-400 to-cyan-500",
-      textColor: "text-blue-950",
-      bgColor: "bg-gradient-to-br from-blue-50 to-cyan-100",
-      icon: <Brain size={28} />,
-      link: "/nutrition"
+      description: "Create tech-focused resumes that get noticed by top companies",
+      color: "from-sky-400 to-blue-500",
+      textColor: "text-sky-800",
+      bgColor: "bg-gradient-to-br from-sky-50 to-blue-100",
+      icon: <Terminal size={28} />,
+      link: "/resume",
+      category: "career"
     },
     {
       title: "Resume Enhancer",
-      description: "Prevention tips and recovery guides",
-      color: "from-yellow-400 to-lime-500",
-      textColor: "text-yellow-950",
-      bgColor: "bg-gradient-to-br from-yellow-50 to-lime-100",
-      icon: <Bandage size={28} />,
-      link: "/injury"
+      description: "AI-powered resume improvements and feedback from industry experts",
+      color: "from-amber-400 to-orange-500",
+      textColor: "text-amber-800",
+      bgColor: "bg-gradient-to-br from-amber-50 to-orange-100",
+      icon: <Cpu size={28} />,
+      link: "/enhance",
+      category: "career"
     },
     {
-      title: "Interview Prepration",
-      description: "Prevention tips and recovery guides",
-      color: "from-yellow-400 to-lime-500",
-      textColor: "text-yellow-950",
-      bgColor: "bg-gradient-to-br from-yellow-50 to-lime-100",
-      icon: <Bandage size={28} />,
-      link: "/interview"
+      title: "Interview Preparation",
+      description: "Practice with real interview questions from top tech companies",
+      color: "from-emerald-400 to-green-500",
+      textColor: "text-emerald-800",
+      bgColor: "bg-gradient-to-br from-emerald-50 to-green-100",
+      icon: <MessageSquare size={28} />,
+      link: "/interview",
+      category: "career",
+      new: true
     },
     {
       title: "Typing Speed Enhancer",
-      description: "Custom nutrition for your goals",
+      description: "Improve your coding speed and accuracy with specialized exercises",
       color: "from-rose-400 to-pink-500",
-      textColor: "text-rose-950",
-      bgColor: "bg-gradient-to-br from-rose-50 to-rose-100", 
-      icon: <Salad size={28} />,
-      link: "/type"
+      textColor: "text-rose-800",
+      bgColor: "bg-gradient-to-br from-rose-50 to-pink-100", 
+      icon: <Code size={28} />,
+      link: "/type",
+      category: "practice"
+    },
+    {
+      title: "Coding Practice",
+      description: "Sharpen your skills with hundreds of real-world coding challenges",
+      color: "from-rose-400 to-pink-500",
+      textColor: "text-rose-800",
+      bgColor: "bg-gradient-to-br from-rose-50 to-pink-100", 
+      icon: <Globe size={28} />,
+      link: "/code",
+      category: "practice",
+      popular: true
     }
   ];
+
+  const filteredCards = activeCategory === "all" 
+    ? cards 
+    : cards.filter(card => card.category === activeCategory);
 
   const container = {
     hidden: { opacity: 0 },
@@ -98,78 +166,230 @@ const Home = () => {
     show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300 } }
   };
 
-  return (
-    <div className="bg-black min-h-screen relative overflow-hidden">
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "Frontend Developer at Google",
+      image: "/api/placeholder/64/64",
+      text: "10xCoders transformed my career. The personalized roadmap helped me go from junior to senior developer in just 8 months."
+    },
+    {
+      name: "Michael Chen",
+      role: "Full Stack Engineer",
+      image: "/api/placeholder/64/64",
+      text: "The interview preparation was spot on. I landed offers from three top tech companies after just 6 weeks of practice."
+    },
+    {
+      name: "Priya Sharma",
+      role: "Machine Learning Engineer",
+      image: "/api/placeholder/64/64",
+      text: "The AI career agent matched me with opportunities I never would have found otherwise. Now I'm working at my dream company!"
+    }
+  ];
 
+  return (
+    <div className="bg-gray-50 min-h-screen relative overflow-hidden">
+      {/* Background gradients */}
       <div className="absolute inset-0 overflow-hidden">
         <div 
-          className="absolute top-0 left-0 w-full h-full opacity-10"
+          className="absolute top-0 left-0 w-full h-full opacity-5"
           style={{
-            backgroundImage: `radial-gradient(circle at ${Math.random() * 100}% ${Math.random() * 100}%, rgba(167, 139, 250, 0.3) 0%, transparent 60%),
-                             radial-gradient(circle at ${Math.random() * 100}% ${Math.random() * 100}%, rgba(99, 102, 241, 0.3) 0%, transparent 40%),
-                             radial-gradient(circle at ${Math.random() * 100}% ${Math.random() * 100}%, rgba(14, 165, 233, 0.3) 0%, transparent 50%),
-                             radial-gradient(circle at ${Math.random() * 100}% ${Math.random() * 100}%, rgba(236, 72, 153, 0.3) 0%, transparent 50%)`
+            backgroundImage: `radial-gradient(circle at ${Math.random() * 100}% ${Math.random() * 100}%, rgba(79, 70, 229, 0.3) 0%, transparent 60%),
+                             radial-gradient(circle at ${Math.random() * 100}% ${Math.random() * 100}%, rgba(37, 99, 235, 0.3) 0%, transparent 40%),
+                             radial-gradient(circle at ${Math.random() * 100}% ${Math.random() * 100}%, rgba(6, 182, 212, 0.3) 0%, transparent 50%),
+                             radial-gradient(circle at ${Math.random() * 100}% ${Math.random() * 100}%, rgba(147, 51, 234, 0.3) 0%, transparent 50%)`
           }}
         />
       </div>
       
-      <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-bl from-violet-600 to-purple-500 opacity-20 blur-3xl" 
-           style={{ transform: `translateY(${scrollY * 0.3}px)` }} />
-      <div className="absolute top-1/3 -left-20 w-80 h-80 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 opacity-20 blur-3xl"
-           style={{ transform: `translateY(${scrollY * -0.2}px)` }} />
-      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-gradient-to-tl from-green-400 to-emerald-500 opacity-20 blur-3xl"
-           style={{ transform: `translateY(${scrollY * 0.1}px)` }} />
+      {/* Animated blobs */}
+      <motion.div 
+        className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-bl from-indigo-600 to-blue-500 opacity-10 blur-3xl" 
+        style={{ translateY: scrollY * 0.3 }} 
+        animate={{ 
+          scale: [1, 1.05, 1],
+          opacity: [0.1, 0.15, 0.1],
+        }}
+        transition={{ 
+          duration: 8, 
+          repeat: Infinity,
+          repeatType: "reverse" 
+        }}
+      />
+      <motion.div 
+        className="absolute top-1/3 -left-20 w-80 h-80 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-10 blur-3xl"
+        style={{ translateY: scrollY * -0.2 }}
+        animate={{ 
+          scale: [1, 1.1, 1],
+          opacity: [0.1, 0.14, 0.1],
+        }}
+        transition={{ 
+          duration: 10, 
+          repeat: Infinity,
+          repeatType: "reverse",
+          delay: 1
+        }}
+      />
+      <motion.div 
+        className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-gradient-to-tl from-purple-400 to-indigo-500 opacity-10 blur-3xl"
+        style={{ translateY: scrollY * 0.1 }}
+        animate={{ 
+          scale: [1, 1.08, 1],
+          opacity: [0.1, 0.13, 0.1],
+        }}
+        transition={{ 
+          duration: 12, 
+          repeat: Infinity,
+          repeatType: "reverse",
+          delay: 2
+        }}
+      />
       
-      <nav className="backdrop-blur-md bg-black/30 border-b border-white/10 p-4 px-6 md:px-10 flex justify-between items-center sticky top-0 z-50">
+      {/* Navigation */}
+      <nav className="backdrop-blur-md bg-white/70 border-b border-gray-200 p-4 px-6 md:px-10 flex justify-between items-center sticky top-0 z-50 transition-all duration-300">
         <div className="flex items-center gap-4">
-          
-          <div className="hidden md:block h-8 w-px bg-white/20" />
-          <h1 className="hidden md:block text-xl lg:text-2xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
+         
+          <div className="hidden md:block h-8 w-px bg-gray-300" />
+          <h1 className="hidden md:block text-xl lg:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
             10xCoders
           </h1>
         </div>
         
-        <div className="flex items-center gap-4">
-          <button className="text-white hover:text-cyan-400 transition-colors duration-300">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-8">
+          <a href="#features" className="text-gray-600 hover:text-indigo-600 transition-colors duration-300">Features</a>
+          <a href="#testimonials" className="text-gray-600 hover:text-indigo-600 transition-colors duration-300">Testimonials</a>
+          <a href="#pricing" className="text-gray-600 hover:text-indigo-600 transition-colors duration-300">Pricing</a>
+          <a href="#blog" className="text-gray-600 hover:text-indigo-600 transition-colors duration-300">Blog</a>
+        </div>
+        
+        <div className="hidden md:flex items-center gap-4">
+          <button className="text-gray-700 hover:text-indigo-600 transition-colors duration-300 font-medium">
             Login
           </button>
-          <button className="bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600 text-white font-medium py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105">
+          <button className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-indigo-500/30">
             Get Started
           </button>
         </div>
+        
+        {/* Mobile menu button */}
+        <button 
+          className="md:hidden text-gray-700 hover:text-indigo-600 transition-colors duration-300"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </nav>
       
-      <div className="relative z-10 px-4 pt-16 pb-12 max-w-7xl mx-auto">
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div 
+            className="fixed inset-0 z-40 bg-white"
+            initial={{ opacity: 0, x: 300 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 300 }}
+            transition={{ type: "spring", damping: 25 }}
+          >
+            <div className="p-4 flex flex-col h-full">
+              <div className="flex justify-end">
+                <button 
+                  className="text-gray-700 hover:text-indigo-600 transition-colors duration-300"
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-label="Close menu"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="mt-8 flex flex-col gap-6">
+                <a href="#features" className="text-gray-800 text-lg font-medium hover:text-indigo-600 transition-colors duration-300" onClick={() => setMobileMenuOpen(false)}>Features</a>
+                <a href="#testimonials" className="text-gray-800 text-lg font-medium hover:text-indigo-600 transition-colors duration-300" onClick={() => setMobileMenuOpen(false)}>Testimonials</a>
+                <a href="#pricing" className="text-gray-800 text-lg font-medium hover:text-indigo-600 transition-colors duration-300" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+                <a href="#blog" className="text-gray-800 text-lg font-medium hover:text-indigo-600 transition-colors duration-300" onClick={() => setMobileMenuOpen(false)}>Blog</a>
+                <div className="h-px w-full bg-gray-200 my-2"></div>
+                <button className="text-gray-800 text-lg font-medium hover:text-indigo-600 transition-colors duration-300">Login</button>
+                <button className="mt-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-indigo-500/30">
+                  Get Started
+                </button>
+              </div>
+              
+              <div className="mt-auto pb-8">
+                <div className="flex gap-4 justify-center">
+                  <a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">
+                    <Twitter size={20} />
+                  </a>
+                  <a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">
+                    <Github size={20} />
+                  </a>
+                  <a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">
+                    <Linkedin size={20} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Hero Section */}
+      <motion.div 
+        ref={heroRef}
+        style={{ opacity: heroOpacity, y: heroY }}
+        className="relative z-10 px-4 pt-16 pb-12 max-w-7xl mx-auto"
+      >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto"
         >
-          <div className="inline-block mb-4 px-6 py-2 bg-white/5 backdrop-blur-sm rounded-full">
-            <span className="text-cyan-400 font-medium">Transform Your Fitness Journey</span>
+          <div className="inline-block mb-4 px-6 py-2 bg-indigo-100 backdrop-blur-sm rounded-full shadow-sm">
+            <span className="text-indigo-700 font-medium flex items-center">
+              <span className="inline-block h-2 w-2 rounded-full bg-indigo-600 mr-2 animate-pulse"></span>
+              Level Up Your Coding Skills
+            </span>
           </div>
           
-          <h1 className="font-extrabold text-white text-5xl md:text-6xl lg:text-7xl tracking-tight">
-            Welcome to <span className="bg-gradient-to-r from-green-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">10xCoders</span>
+          <h1 className="font-extrabold text-gray-900 text-5xl md:text-6xl lg:text-7xl tracking-tight">
+            Welcome to <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">10xCoders</span>
           </h1>
           
-          <p className="mt-6 text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-            Your all-in-one fitness companion for a healthier lifestyle. Personalized workouts, nutrition plans, and expert guidance - all in one place.
+          <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+            Your all-in-one platform to learn, practice, and advance your programming career. Personalized learning paths, career guidance, and expert mentorship - all in one place.
           </p>
           
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-            <button className="px-8 py-3 rounded-full bg-gradient-to-r from-green-500 to-cyan-500 text-white font-medium transform transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20">
-              Start Your Journey
+            <button 
+              className="px-8 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-medium transform transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/20 flex items-center justify-center"
+              onClick={() => navigate("/courses")}
+            >
+              <span>Start Coding Now</span>
+              <ChevronRight size={18} className="ml-1" />
             </button>
-            <button className="px-8 py-3 rounded-full bg-white/10 backdrop-blur-sm text-white font-medium border border-white/20 hover:bg-white/20 transition-all duration-300">
-              Learn More
+            <button className="px-8 py-3 rounded-full bg-white text-gray-800 font-medium border border-gray-300 hover:bg-gray-100 transition-all duration-300 flex items-center justify-center">
+              <span>Explore Paths</span>
+              <ArrowRight size={18} className="ml-1" />
             </button>
           </div>
+          
+          {/* Trusted by companies */}
+          <div className="mt-16">
+            <p className="text-sm text-gray-500 mb-4">TRUSTED BY DEVELOPERS FROM TOP COMPANIES</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
+              <img src="/api/placeholder/100/40" alt="Company logo" className="h-8" />
+              <img src="/api/placeholder/120/40" alt="Company logo" className="h-8" />
+              <img src="/api/placeholder/90/40" alt="Company logo" className="h-8" />
+              <img src="/api/placeholder/110/40" alt="Company logo" className="h-8" />
+              <img src="/api/placeholder/95/40" alt="Company logo" className="h-8" />
+            </div>
+          </div>
         </motion.div>
-      </div>
+      </motion.div>
       
-      <div className="relative z-10 px-4 py-8 max-w-7xl mx-auto">
+      {/* Features Section */}
+      <div id="features" className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -177,11 +397,31 @@ const Home = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="font-bold text-2xl md:text-3xl text-white">
-            What are you up to today?
+          <h2 className="font-bold text-3xl md:text-4xl text-gray-900">
+            What would you like to learn today?
           </h2>
-          <div className="mt-2 h-1 w-20 bg-gradient-to-r from-green-400 to-cyan-400 mx-auto rounded-full"></div>
+          <div className="mt-2 h-1 w-20 bg-gradient-to-r from-indigo-500 to-blue-500 mx-auto rounded-full"></div>
+          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
+            Explore our comprehensive suite of tools designed to accelerate your coding journey and tech career
+          </p>
         </motion.div>
+        
+        {/* Category Tabs */}
+        <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setActiveCategory(category.id)}
+              className={`px-4 py-2 rounded-full transition-all duration-300 ${
+                activeCategory === category.id
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
         
         <motion.div 
           variants={container}
@@ -190,76 +430,539 @@ const Home = () => {
           viewport={{ once: true }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16"
         >
-          {cards.map((card, index) => (
-            <motion.div key={index} variants={item}>
-              <Link 
-                to={card.link}
-                className={`${card.bgColor} rounded-2xl overflow-hidden group transition-all duration-500 transform hover:scale-105 hover:shadow-xl hover:shadow-${card.color.split(' ')[0]}/20 flex flex-col h-full`}
+          <AnimatePresence>
+            {filteredCards.map((card, index) => (
+              <motion.div 
+                key={card.title} 
+                variants={item}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ type: "spring", damping: 25 }}
+                onHoverStart={() => setHoveredCard(card.title)}
+                onHoverEnd={() => setHoveredCard(null)}
               >
-                <div className="p-6 flex flex-col h-full">
-                  <div className={`w-12 h-12 mb-4 rounded-lg flex items-center justify-center bg-gradient-to-r ${card.color} ${card.textColor} bg-opacity-10`}>
-                    {card.icon}
+                <Link 
+                  to={card.link}
+                  className={`${card.bgColor} rounded-2xl overflow-hidden group transition-all duration-500 transform hover:scale-105 hover:shadow-xl flex flex-col h-full relative`}
+                  aria-label={`Explore ${card.title}`}
+                >
+                  {/* Badge for new or popular items */}
+                  {card.new && (
+                    <div className="absolute top-4 right-4 bg-indigo-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                      NEW
+                    </div>
+                  )}
+                  {card.popular && !card.new && (
+                    <div className="absolute top-4 right-4 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                      POPULAR
+                    </div>
+                  )}
+                  
+                  <div className="p-6 flex flex-col h-full">
+                    <div className={`w-12 h-12 mb-4 rounded-lg flex items-center justify-center bg-gradient-to-r ${card.color} text-white shadow-md transform transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                      {card.icon}
+                    </div>
+                    <h3 className={`font-bold text-xl ${card.textColor}`}>{card.title}</h3>
+                    <p className={`mt-2 ${card.textColor} opacity-80`}>{card.description}</p>
+                    <div className="mt-auto pt-4 flex items-center font-medium">
+                      <span className={`${card.textColor}`}>Explore</span>
+                      <ArrowRight 
+                        size={16} 
+                        className={`ml-2 transition-transform duration-300 ${
+                          hoveredCard === card.title ? "translate-x-1" : ""
+                        } ${card.textColor}`} 
+                      />
+                    </div>
                   </div>
-                  <h3 className={`font-bold text-xl ${card.textColor}`}>{card.title}</h3>
-                  <p className={`mt-2 ${card.textColor} opacity-80`}>{card.description}</p>
-                  <div className="mt-auto pt-4 flex items-center font-medium">
-                    <span className={`${card.textColor}`}>Explore</span>
-                    <ArrowRight size={16} className={`ml-2 transition-transform duration-300 group-hover:translate-x-1 ${card.textColor}`} />
-                  </div>
-                </div>
-                <div className={`h-1 w-0 group-hover:w-full transition-all duration-500 bg-gradient-to-r ${card.color}`}></div>
-              </Link>
-            </motion.div>
-          ))}
+                  <div className={`h-1 w-0 group-hover:w-full transition-all duration-500 bg-gradient-to-r ${card.color}`}></div>
+                </Link>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </motion.div>
       </div>
-      <div className="relative z-10 px-4 py-16 bg-gradient-to-b from-black/0 via-black/50 to-black/0">
+      
+      {/* Stats Section */}
+      <div className="relative z-10 px-4 py-16 bg-gradient-to-b from-gray-50 via-indigo-50/50 to-gray-50">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="max-w-7xl mx-auto rounded-3xl overflow-hidden backdrop-blur-md bg-white/5 border border-white/10"
+          className="max-w-7xl mx-auto rounded-3xl overflow-hidden backdrop-blur-md bg-white shadow-lg border border-gray-200"
         >
           <div className="px-6 py-12 md:px-10 md:py-16 text-center">
-            <h2 className="font-bold text-2xl md:text-3xl text-white mb-10">
-              Join thousands transforming their lives with FitVerse
+            <h2 className="font-bold text-2xl md:text-3xl text-gray-900 mb-10">
+              Join thousands transforming their careers with 10xCoders
             </h2>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div>
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">10K+</p>
-                <p className="text-gray-400 mt-2">Active Users</p>
-              </div>
-              <div>
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">500+</p>
-                <p className="text-gray-400 mt-2">Workout Plans</p>
-              </div>
-              <div>
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">300+</p>
-                <p className="text-gray-400 mt-2">Diet Templates</p>
-              </div>
-              <div>
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">95%</p>
-                <p className="text-gray-400 mt-2">Success Rate</p>
-              </div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">50K+</p>
+                <p className="text-gray-600 mt-2">Active Coders</p>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">1000+</p>
+                <p className="text-gray-600 mt-2">Coding Challenges</p>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">300+</p>
+                <p className="text-gray-600 mt-2">Course Modules</p>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">92%</p>
+                <p className="text-gray-600 mt-2">Placement Rate</p>
+              </motion.div>
             </div>
           </div>
         </motion.div>
       </div>
-   
-      <footer className="relative z-10 px-6 py-8 border-t border-white/10 bg-black">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="flex items-center mb-4 md:mb-0">
-            <img src={logo} className="w-10 mr-3" alt="FitVerse Logo" />
-            <p className="text-white/70 text-sm">© 2025 FitVerse. All rights reserved.</p>
+      
+      {/* Testimonials Section */}
+      <div id="testimonials" className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="font-bold text-3xl md:text-4xl text-gray-900">
+            What our members say
+          </h2>
+          <div className="mt-2 h-1 w-20 bg-gradient-to-r from-indigo-500 to-blue-500 mx-auto rounded-full"></div>
+          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
+            Hear from developers who transformed their careers with our platform
+          </p>
+        </motion.div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          {testimonials.map((testimonial, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              whileHover={{ scale: 1.03 }}
+              className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
+            >
+              <div className="flex items-center mb-4">
+                <img 
+                  src={testimonial.image} 
+                  alt={testimonial.name} 
+                  className="w-12 h-12 rounded-full mr-4 object-cover"
+                />
+                <div>
+                  <h3 className="font-bold text-gray-900">{testimonial.name}</h3>
+                  <p className="text-gray-600 text-sm">{testimonial.role}</p>
+                </div>
+              </div>
+              <p className="text-gray-700 italic">{testimonial.text}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+      
+      {/* CTA Section */}
+      <div className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-3xl overflow-hidden shadow-xl"
+        >
+          <div className="px-6 py-12 md:px-10 md:py-16 text-center text-white relative overflow-hidden">
+            {/* Background decorative elements */}
+            <div className="absolute inset-0 overflow-hidden opacity-10">
+              <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white blur-3xl"></div>
+              <div className="absolute bottom-0 left-1/4 w-48 h-48 rounded-full bg-white blur-3xl"></div>
+            </div>
+            
+            <h2 className="font-bold text-2xl md:text-4xl text-white mb-4">
+              Ready to become a better developer?
+            </h2>
+            <p className="text-white text-opacity-90 max-w-2xl mx-auto mb-8">
+              Join thousands of developers who are transforming their careers with personalized learning paths, expert mentorship, and cutting-edge tools.
+            </p>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3 rounded-full bg-white text-indigo-600 font-medium shadow-lg transform transition-all duration-300 hover:shadow-white/20"
+            >
+              Get Started Free
+            </motion.button>
+            <p className="mt-4 text-sm text-white text-opacity-80">
+              No credit card required. Start with our free plan today.
+            </p>
+          </div>
+        </motion.div>
+      </div>
+      
+      {/* Pricing Section */}
+      <div id="pricing" className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="font-bold text-3xl md:text-4xl text-gray-900">
+            Simple, transparent pricing
+          </h2>
+          <div className="mt-2 h-1 w-20 bg-gradient-to-r from-indigo-500 to-blue-500 mx-auto rounded-full"></div>
+          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
+            Choose the plan that's right for your learning journey
+          </p>
+        </motion.div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {/* Free Plan */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            whileHover={{ scale: 1.03 }}
+            className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200"
+          >
+            <h3 className="font-bold text-xl text-gray-900">Free</h3>
+            <p className="mt-2 text-gray-600">Perfect for beginners</p>
+            <div className="mt-6 mb-6">
+              <span className="text-4xl font-bold text-gray-900">$0</span>
+              <span className="text-gray-600">/month</span>
+            </div>
+            <ul className="mb-8 space-y-3">
+              <li className="flex items-center text-gray-700">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Limited coding challenges
+              </li>
+              <li className="flex items-center text-gray-700">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Basic roadmaps
+              </li>
+              <li className="flex items-center text-gray-700">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Community support
+              </li>
+            </ul>
+            <button className="w-full px-4 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium transition-all duration-300">
+              Get Started
+            </button>
+          </motion.div>
+          
+          {/* Pro Plan */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            whileHover={{ scale: 1.05 }}
+            className="bg-gradient-to-b from-indigo-50 to-white p-8 rounded-2xl shadow-xl border border-indigo-100 relative"
+          >
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+              MOST POPULAR
+            </div>
+            <h3 className="font-bold text-xl text-indigo-800">Pro</h3>
+            <p className="mt-2 text-indigo-700">For serious learners</p>
+            <div className="mt-6 mb-6">
+              <span className="text-4xl font-bold text-indigo-800">$19</span>
+              <span className="text-indigo-700">/month</span>
+            </div>
+            <ul className="mb-8 space-y-3">
+              <li className="flex items-center text-indigo-800">
+                <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Unlimited coding challenges
+              </li>
+              <li className="flex items-center text-indigo-800">
+                <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Personalized roadmaps
+              </li>
+              <li className="flex items-center text-indigo-800">
+                <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                All courses included
+              </li>
+              <li className="flex items-center text-indigo-800">
+                <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Resume builder tools
+              </li>
+              <li className="flex items-center text-indigo-800">
+                <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Priority email support
+              </li>
+            </ul>
+            <button className="w-full px-4 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/30 transform hover:scale-105">
+              Subscribe Now
+            </button>
+          </motion.div>
+          
+          {/* Enterprise Plan */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            whileHover={{ scale: 1.03 }}
+            className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200"
+          >
+            <h3 className="font-bold text-xl text-gray-900">Enterprise</h3>
+            <p className="mt-2 text-gray-600">For teams and businesses</p>
+            <div className="mt-6 mb-6">
+              <span className="text-4xl font-bold text-gray-900">$49</span>
+              <span className="text-gray-600">/month</span>
+            </div>
+            <ul className="mb-8 space-y-3">
+              <li className="flex items-center text-gray-700">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Everything in Pro plan
+              </li>
+              <li className="flex items-center text-gray-700">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Team collaboration tools
+              </li>
+              <li className="flex items-center text-gray-700">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Custom learning paths
+              </li>
+              <li className="flex items-center text-gray-700">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                1-on-1 mentorship
+              </li>
+              <li className="flex items-center text-gray-700">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Dedicated support manager
+              </li>
+            </ul>
+            <button className="w-full px-4 py-3 rounded-lg bg-gray-800 hover:bg-gray-900 text-white font-medium transition-all duration-300">
+              Contact Sales
+            </button>
+          </motion.div>
+        </div>
+      </div>
+      
+      {/* Blog Section */}
+      <div id="blog" className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="font-bold text-3xl md:text-4xl text-gray-900">
+            Latest from our blog
+          </h2>
+          <div className="mt-2 h-1 w-20 bg-gradient-to-r from-indigo-500 to-blue-500 mx-auto rounded-full"></div>
+          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
+            Insights, tutorials, and industry trends to help you grow as a developer
+          </p>
+        </motion.div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {[1, 2, 3].map((blog, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              whileHover={{ scale: 1.03 }}
+              className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
+            >
+              <div className="h-48 bg-gray-200">
+                <img 
+                  src={`/api/placeholder/800/400?text=Blog+${index + 1}`} 
+                  alt={`Blog post ${index + 1}`} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-6">
+                <div className="text-sm text-indigo-600 font-medium mb-2">
+                  {["Career Tips", "Tutorial", "Industry Insights"][index]}
+                </div>
+                <h3 className="font-bold text-xl text-gray-900 mb-2">
+                  {[
+                    "How to Land Your First Developer Job in 2025",
+                    "Building Modern UIs with React and Tailwind CSS",
+                    "The Future of AI in Software Development"
+                  ][index]}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {[
+                    "Essential strategies and practical tips to help you break into the tech industry...",
+                    "Learn how to combine React's component-based architecture with Tailwind's utility-first approach...",
+                    "Discover how AI is transforming software development and what skills you'll need to stay ahead..."
+                  ][index]}
+                </p>
+                <div className="flex items-center">
+                  <img 
+                    src={`/api/placeholder/40/40?text=A${index + 1}`} 
+                    alt="Author" 
+                    className="w-10 h-10 rounded-full mr-3 object-cover" 
+                  />
+                  <div>
+                    <p className="text-gray-900 font-medium">
+                      {["Alex Johnson", "Maya Patel", "David Kim"][index]}
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      {["Apr 10, 2025", "Apr 5, 2025", "Mar 28, 2025"][index]}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        
+        <div className="text-center">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-6 py-2 rounded-lg border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium transition-colors duration-300"
+          >
+            View All Articles
+          </motion.button>
+        </div>
+      </div>
+      
+      {/* Newsletter Section */}
+      <div className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="bg-gradient-to-br from-gray-50 to-white rounded-3xl overflow-hidden shadow-lg border border-gray-200 p-8 md:p-12"
+        >
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="font-bold text-2xl md:text-3xl text-gray-900 mb-4">
+              Stay updated with the latest in coding
+            </h2>
+            <p className="text-gray-600 mb-8">
+              Subscribe to our newsletter to receive coding tips, career advice, and updates on new features
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input 
+                type="email" 
+                placeholder="Enter your email address" 
+                className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <button className="px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/30">
+                Subscribe
+              </button>
+            </div>
+            <p className="mt-4 text-sm text-gray-500">
+              We respect your privacy. Unsubscribe at any time.
+            </p>
+          </div>
+        </motion.div>
+      </div>
+      
+      {/* Footer */}
+      <footer className="relative z-10 px-4 py-12 md:py-16 border-t border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <img src={logo} alt="10xCoders Logo" className="h-8 w-auto" />
+                <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                  10xCoders
+                </h2>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Your all-in-one platform to learn, practice, and advance your programming career.
+              </p>
+              <div className="flex gap-4">
+                <a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">
+                  <Twitter size={20} />
+                </a>
+                <a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">
+                  <Github size={20} />
+                </a>
+                <a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">
+                  <Linkedin size={20} />
+                </a>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-bold text-gray-900 mb-4">Platform</h3>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Features</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Roadmaps</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Courses</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Career Tools</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Practice</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-bold text-gray-900 mb-4">Company</h3>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">About Us</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Careers</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Blog</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Press</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Contact</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-bold text-gray-900 mb-4">Resources</h3>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Documentation</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Support</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-indigo-600 transition-colors">FAQ</a></li>
+              </ul>
+            </div>
           </div>
           
-          <div className="flex gap-6">
-            <a href="#" className="text-white/70 hover:text-white transition-colors">About</a>
-            <a href="#" className="text-white/70 hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="text-white/70 hover:text-white transition-colors">Terms</a>
-            <a href="#" className="text-white/70 hover:text-white transition-colors">Contact</a>
+          <div className="pt-8 border-t border-gray-200 text-center text-gray-500 text-sm">
+            <p>© {new Date().getFullYear()} 10xCoders. All rights reserved.</p>
           </div>
         </div>
       </footer>
