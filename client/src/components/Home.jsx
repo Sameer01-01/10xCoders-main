@@ -264,11 +264,8 @@ const Home = () => {
         </div>
         
         <div className="hidden md:flex items-center gap-4">
-          <button 
-            className="text-gray-700 hover:text-indigo-600 transition-colors duration-300 font-medium"
-            onClick={() => navigate("/")}
-          >
-            Logout
+          <button className="text-gray-700 hover:text-indigo-600 transition-colors duration-300 font-medium">
+            Login
           </button>
           <button className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-indigo-500/30">
             Get Started
@@ -377,17 +374,8 @@ const Home = () => {
             </button>
           </div>
           
-          {/* Trusted by companies */}
-          <div className="mt-16">
-            <p className="text-sm text-gray-500 mb-4">TRUSTED BY DEVELOPERS FROM TOP COMPANIES</p>
-            <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
-              <img src="/api/placeholder/100/40" alt="Company logo" className="h-8" />
-              <img src="/api/placeholder/120/40" alt="Company logo" className="h-8" />
-              <img src="/api/placeholder/90/40" alt="Company logo" className="h-8" />
-              <img src="/api/placeholder/110/40" alt="Company logo" className="h-8" />
-              <img src="/api/placeholder/95/40" alt="Company logo" className="h-8" />
-            </div>
-          </div>
+     
+         
         </motion.div>
       </motion.div>
       
