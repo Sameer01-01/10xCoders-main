@@ -170,19 +170,19 @@ const Home = () => {
     {
       name: "Sarah Johnson",
       role: "Frontend Developer at Google",
-      image: "/api/placeholder/64/64",
+     
       text: "10xCoders transformed my career. The personalized roadmap helped me go from junior to senior developer in just 8 months."
     },
     {
       name: "Michael Chen",
       role: "Full Stack Engineer",
-      image: "/api/placeholder/64/64",
+      
       text: "The interview preparation was spot on. I landed offers from three top tech companies after just 6 weeks of practice."
     },
     {
       name: "Priya Sharma",
       role: "Machine Learning Engineer",
-      image: "/api/placeholder/64/64",
+      
       text: "The AI career agent matched me with opportunities I never would have found otherwise. Now I'm working at my dream company!"
     }
   ];
@@ -562,11 +562,6 @@ const Home = () => {
               className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
             >
               <div className="flex items-center mb-4">
-                <img 
-                  src={testimonial.image} 
-                  alt={testimonial.name} 
-                  className="w-12 h-12 rounded-full mr-4 object-cover"
-                />
                 <div>
                   <h3 className="font-bold text-gray-900">{testimonial.name}</h3>
                   <p className="text-gray-600 text-sm">{testimonial.role}</p>
@@ -783,89 +778,7 @@ const Home = () => {
       </div>
       
       {/* Blog Section */}
-      <div id="blog" className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-          <h2 className="font-bold text-3xl md:text-4xl text-gray-900">
-            Latest from our blog
-          </h2>
-          <div className="mt-2 h-1 w-20 bg-gradient-to-r from-indigo-500 to-blue-500 mx-auto rounded-full"></div>
-          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
-            Insights, tutorials, and industry trends to help you grow as a developer
-          </p>
-        </motion.div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          {[1, 2, 3].map((blog, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ scale: 1.03 }}
-              className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
-            >
-              <div className="h-48 bg-gray-200">
-                <img 
-                  src={`/api/placeholder/800/400?text=Blog+${index + 1}`} 
-                  alt={`Blog post ${index + 1}`} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <div className="text-sm text-indigo-600 font-medium mb-2">
-                  {["Career Tips", "Tutorial", "Industry Insights"][index]}
-                </div>
-                <h3 className="font-bold text-xl text-gray-900 mb-2">
-                  {[
-                    "How to Land Your First Developer Job in 2025",
-                    "Building Modern UIs with React and Tailwind CSS",
-                    "The Future of AI in Software Development"
-                  ][index]}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {[
-                    "Essential strategies and practical tips to help you break into the tech industry...",
-                    "Learn how to combine React's component-based architecture with Tailwind's utility-first approach...",
-                    "Discover how AI is transforming software development and what skills you'll need to stay ahead..."
-                  ][index]}
-                </p>
-                <div className="flex items-center">
-                  <img 
-                    src={`/api/placeholder/40/40?text=A${index + 1}`} 
-                    alt="Author" 
-                    className="w-10 h-10 rounded-full mr-3 object-cover" 
-                  />
-                  <div>
-                    <p className="text-gray-900 font-medium">
-                      {["Alex Johnson", "Maya Patel", "David Kim"][index]}
-                    </p>
-                    <p className="text-gray-500 text-sm">
-                      {["Apr 10, 2025", "Apr 5, 2025", "Mar 28, 2025"][index]}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-        
-        <div className="text-center">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 py-2 rounded-lg border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium transition-colors duration-300"
-          >
-            View All Articles
-          </motion.button>
-        </div>
-      </div>
+      
       
       {/* Newsletter Section */}
       <div className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
