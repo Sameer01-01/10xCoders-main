@@ -264,8 +264,11 @@ const Home = () => {
         </div>
         
         <div className="hidden md:flex items-center gap-4">
-          <button className="text-gray-700 hover:text-indigo-600 transition-colors duration-300 font-medium">
-            Login
+          <button 
+            className="text-gray-700 hover:text-indigo-600 transition-colors duration-300 font-medium"
+            onClick={() => navigate("/")}
+          >
+            Logout
           </button>
           <button className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-indigo-500/30">
             Get Started
