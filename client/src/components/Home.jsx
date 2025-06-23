@@ -819,7 +819,6 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src={logo} alt="10xCoders Logo" className="h-8 w-auto" />
                 <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
                   10xCoders
                 </h2>
