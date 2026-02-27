@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, Send, Briefcase, CheckCircle, Volume2 } from 'lucide-react';
 
-const GEMINI_API_KEY = "AIzaSyDYkEfit-LZ6afs61_PS8YM6Jaws-Ztf1s"; 
+const GEMINI_API_KEY = "AIzaSyDsBPaPGLsRr9FXNop3EgLpSwzvc-w_5wA"; 
 
 const EnhanceResume = () => {
   const [file, setFile] = useState(null);
@@ -152,7 +152,7 @@ const EnhanceResume = () => {
         Do not include any other analysis besides the ATS score and keyword matching analysis.`;
       }
       
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

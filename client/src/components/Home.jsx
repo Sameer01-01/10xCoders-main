@@ -18,6 +18,7 @@ import {
   Twitter,
   Linkedin
 } from "lucide-react";
+import Chatbot from "./Chatbot";
 
 const Home = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -869,6 +870,7 @@ const Home = () => {
           </div>
         </div>
       </footer>
+      <Chatbot />
     </div>
   );
 };

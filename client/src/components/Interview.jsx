@@ -18,7 +18,7 @@ const InterviewPrep = () => {
   const [recognition, setRecognition] = useState(null);
 
 
-  const genAI = new GoogleGenerativeAI('AIzaSyDm2ODVscz6kNEsHPo4yWlyyRMiGXWFLQA');
+  const genAI = new GoogleGenerativeAI('AIzaSyDsBPaPGLsRr9FXNop3EgLpSwzvc-w_5wA');
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
@@ -51,7 +51,7 @@ const InterviewPrep = () => {
   const generateInterviewQuestions = async () => {
     setIsLoading(true);
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
       
       const prompt = `Generate ${questionCount} simple interview questions for a ${jobRole} position based on the following job description:
 
@@ -122,7 +122,7 @@ Format the output as a JSON array of question objects, where each object has a "
   const evaluateAnswer = async () => {
     setIsLoading(true);
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
       const currentQuestion = generatedQuestions[currentQuestionIndex].question;
       
       const prompt = `Evaluate this answer to the interview question: "${currentQuestion}"
@@ -151,7 +151,7 @@ Format your response in a clear, constructive manner that helps the interviewee 
   const generateOverallFeedback = async () => {
     setIsLoading(true);
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
       
       const prompt = `Provide an overall evaluation of the interview performance for a ${jobRole} position.
 

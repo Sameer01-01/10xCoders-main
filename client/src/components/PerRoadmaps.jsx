@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // Gemini API key (replace this with environment variable in production)
-const GEMINI_API_KEY = "AIzaSyC0VsAVzWJMySL5OzAFQY91Ye-quGj0W-g";
+const GEMINI_API_KEY = "AIzaSyDsBPaPGLsRr9FXNop3EgLpSwzvc-w_5wA";
 
 const PersonalizedRoadmap = () => {
   const [topic, setTopic] = useState('');
@@ -40,7 +40,7 @@ const PersonalizedRoadmap = () => {
         (Include any relevant information, tips, or resources that would be helpful)
       `;
       
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
