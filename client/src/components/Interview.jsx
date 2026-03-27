@@ -18,7 +18,7 @@ const InterviewPrep = () => {
   const [recognition, setRecognition] = useState(null);
 
 
-  const genAI = new GoogleGenerativeAI('AIzaSyDsBPaPGLsRr9FXNop3EgLpSwzvc-w_5wA');
+  const genAI = new GoogleGenerativeAI('AIzaSyCiE7qt-qkDL6LyXQ7sax3nw3w8AucFWx8');
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {

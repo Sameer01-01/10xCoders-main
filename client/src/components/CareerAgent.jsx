@@ -3,9 +3,8 @@ import { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Replace with your actual API key
-const API_KEY = "AIzaSyDsBPaPGLsRr9FXNop3EgLpSwzvc-w_5wA";
+const API_KEY = "AIzaSyCiE7qt-qkDL6LyXQ7sax3nw3w8AucFWx8";
 
-// Initialize the Gemini API
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -93,7 +92,11 @@ function App() {
       setRecommendation(text);
     } catch (error) {
       console.error("Error generating recommendation:", error);
-      setRecommendation("Sorry, there was an error generating your recommendation. Please try again later.");
+      let errorMessage = "Sorry, there was an error generating your recommendation. Please try again later.";
+      if (error.message) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      setRecommendation(errorMessage);
     }
   };
 

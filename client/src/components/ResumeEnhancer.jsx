@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, Send, Briefcase, CheckCircle, Volume2 } from 'lucide-react';
 
-const GEMINI_API_KEY = "AIzaSyDsBPaPGLsRr9FXNop3EgLpSwzvc-w_5wA"; 
+const GEMINI_API_KEY = "AIzaSyCiE7qt-qkDL6LyXQ7sax3nw3w8AucFWx8"; 
 
 const EnhanceResume = () => {
   const [file, setFile] = useState(null);
@@ -29,10 +29,11 @@ const EnhanceResume = () => {
       const reader = new FileReader();
       
       reader.onload = async (event) => {
-        setFileContent(event.target.result);
+        const base64String = event.target.result.split(',')[1];
+        setFileContent(base64String);
       };
       
-      reader.readAsArrayBuffer(selectedFile);
+      reader.readAsDataURL(selectedFile);
     } else {
       alert('Please select a PDF file');
     }
@@ -42,40 +43,18 @@ const EnhanceResume = () => {
     setSelectedAction(actionId);
   };
 
-  const extractBasicInfo = (pdfText) => {
-    const nameMatch = pdfText.match(/^([A-Z][a-z]+ [A-Z][a-z]+)/m) || 
-                      pdfText.match(/([A-Z][a-z]+ [A-Z][a-z]+)\n/);
-    const name = nameMatch ? nameMatch[1] : "professional";
-    
-    const jobTitleMatch = pdfText.match(/\n((?:Senior|Junior|Lead)?\s?[A-Za-z]+ (?:Developer|Engineer|Designer|Manager|Specialist|Analyst|Consultant))/m);
-    const jobTitle = jobTitleMatch ? jobTitleMatch[1] : "";
-    
-    const yearsExpMatch = pdfText.match(/([0-9]+)\+?\s?years of experience/i);
-    const yearsExperience = yearsExpMatch ? yearsExpMatch[1] : "";
 
-    return {
-      name,
-      jobTitle,
-      yearsExperience
-    };
-  };
 
   const processWithGemini = async () => {
     setIsLoading(true);
     
     try {
-      const pdfText = await extractTextFromPDF(fileContent);
-      const basicInfo = extractBasicInfo(pdfText);
-      
       let promptText = '';
       
       if (selectedAction === 'ats-score') {
-        promptText = `I need analysis for a resume based on a job description.
+        promptText = `I need analysis for the attached resume based on a job description.
         
         ACTION: ATS Score
-        
-        RESUME CONTENT:
-        ${pdfText}
         
         JOB DESCRIPTION:
         ${jobDescription}
@@ -85,15 +64,12 @@ const EnhanceResume = () => {
         format compatibility, section organization, and overall readability.
         Do not include any other analysis besides the ATS score.`;
       } else if (selectedAction === 'ats-enhancer') {
-        promptText = `I need personalized analysis for ${basicInfo.name}'s resume based on a job description.
-        
-        RESUME CONTENT:
-        ${pdfText}
+        promptText = `I need personalized analysis for the attached resume based on a job description.
         
         JOB DESCRIPTION:
         ${jobDescription}
         
-        First, provide a personalized greeting that includes the person's name (${basicInfo.name}) and a brief
+        First, extract the candidate's name from the resume and provide a personalized greeting that includes their name and a brief
         summary of what you've understood about them from their resume (e.g., their experience level, current role,
         industry, key strengths, etc.).
         
@@ -108,22 +84,18 @@ const EnhanceResume = () => {
         
         Present your analysis in markdown format.`;
       } else if (selectedAction === 'resume-feedback') {
-        promptText = `I need personalized feedback for ${basicInfo.name}'s resume based on a job description.
-        
-        RESUME CONTENT:
-        ${pdfText}
+        promptText = `I need personalized feedback for the attached resume based on a job description.
         
         JOB DESCRIPTION:
         ${jobDescription}
         
-        First, provide a personalized greeting that includes the person's name (${basicInfo.name}) and a brief
-        summary of what you've understood about them from their resume (their background, experience level, 
+        First, extract the candidate's name from the resume and provide a personalized greeting that includes their name and a brief
+        summary of what you've understood about them (their background, experience level, 
         key skills, career trajectory, etc.).
         
         Then, provide an ATS compatibility score out of 100 with a brief breakdown.
         
-        Next, provide detailed section-by-section feedback on the resume. For each section (Contact Information, 
-        Professional Summary, Work Experience, Skills, Education, etc.), include strengths (marked with ✅) 
+        Next, provide detailed section-by-section feedback on the resume. For each section, include strengths (marked with ✅) 
         and improvement areas (marked with ⚠️). Make this feedback specific to their actual experiences and skills,
         not generic advice.
         
@@ -132,10 +104,7 @@ const EnhanceResume = () => {
         
         Present your analysis in markdown format.`;
       } else if (selectedAction === 'keyword-match') {
-        promptText = `I need analysis for a resume based on a job description.
-        
-        RESUME CONTENT:
-        ${pdfText}
+        promptText = `I need analysis for the attached resume based on a job description.
         
         JOB DESCRIPTION:
         ${jobDescription}
@@ -160,15 +129,21 @@ const EnhanceResume = () => {
         },
         body: JSON.stringify({
           contents: [{
-            parts: [{
-              text: promptText
-            }]
+            parts: [
+              { text: promptText },
+              {
+                inlineData: {
+                  mimeType: 'application/pdf',
+                  data: fileContent
+                }
+              }
+            ]
           }],
           generationConfig: {
             temperature: 0.2,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 8192,
           }
         })
       });
@@ -190,67 +165,7 @@ const EnhanceResume = () => {
     }
   };
   
-  const extractTextFromPDF = async (pdfBuffer) => {
-    try {
-      // In a real implementation, you would extract text from the PDF
-      // This is a placeholder that simulates a resume for a software developer
-      return `Jane Smith
-123 Main Street, San Francisco, CA 94105
-jane.smith@email.com | (555) 123-4567 | linkedin.com/in/janesmith
 
-SOFTWARE ENGINEER
-Innovative Software Engineer with 5+ years of experience in full-stack development and cloud solutions.
-Passionate about creating efficient, scalable applications using modern technologies.
-
-SKILLS
-Programming Languages: JavaScript, TypeScript, Python, Java, SQL
-Frameworks & Libraries: React, Node.js, Express, Django, Spring Boot
-Cloud & DevOps: AWS, Docker, Kubernetes, CI/CD, Terraform
-Databases: MongoDB, PostgreSQL, MySQL, Redis
-Other: RESTful APIs, GraphQL, Microservices, Agile/Scrum
-
-EXPERIENCE
-Senior Software Engineer | TechCorp Inc., San Francisco, CA | 2020 - Present
-- Architected and implemented scalable microservices using Node.js and Kubernetes
-- Led migration from monolithic architecture to microservices, reducing deployment time by 70%
-- Mentored junior developers and conducted code reviews to ensure quality and best practices
-- Implemented CI/CD pipelines using Jenkins, reducing release cycles by 40%
-
-Software Developer | InnoSoft Solutions, San Francisco, CA | 2018 - 2020
-- Developed responsive web applications using React and Redux
-- Built and maintained RESTful APIs using Express and MongoDB
-- Collaborated with UI/UX designers to implement intuitive user interfaces
-- Optimized database queries, improving application performance by 35%
-
-Junior Developer | CodeWave Technologies, Oakland, CA | 2016 - 2018
-- Assisted in developing and maintaining e-commerce platforms
-- Implemented front-end features using JavaScript and jQuery
-- Fixed bugs and performed code refactoring to improve maintainability
-- Participated in daily stand-ups and sprint planning meetings
-
-EDUCATION
-Bachelor of Science in Computer Science | University of California, Berkeley | 2016
-- GPA: 3.8/4.0
-- Relevant coursework: Data Structures, Algorithms, Database Systems, Web Development
-
-PROJECTS
-Personal Budget Tracker
-- Developed a full-stack application using MERN stack (MongoDB, Express, React, Node.js)
-- Implemented user authentication, data visualization, and expense categorization
-
-Weather Forecast App
-- Created a responsive web app using React that displays weather forecasts
-- Integrated with OpenWeatherMap API and implemented geolocation services
-
-CERTIFICATIONS
-- AWS Certified Developer - Associate (2022)
-- MongoDB Certified Developer (2021)
-- Google Cloud Professional Developer (2020)`;
-    } catch (error) {
-      console.error("Error extracting text from PDF:", error);
-      throw new Error("Failed to extract text from the PDF");
-    }
-  };
 
   const resetForm = () => {
     setFile(null);
@@ -508,17 +423,21 @@ CERTIFICATIONS
             </button>
           </div>
           
-          <div className="bg-white p-8 rounded-xl border border-gray-200 w-full mb-8 prose max-w-none shadow-lg">
+          <div className="bg-white p-8 rounded-xl border border-gray-200 w-full mb-8 prose max-w-none shadow-lg whitespace-pre-wrap">
             <div dangerouslySetInnerHTML={{ 
-              __html: result.replace(/^# (.*$)/gm, '<h2 class="text-2xl font-bold text-gray-800">$1</h2>')
-                          .replace(/^## (.*$)/gm, '<h3 class="text-xl font-semibold text-gray-800">$1</h3>')
-                          .replace(/^### (.*$)/gm, '<h4 class="text-lg font-medium text-gray-800">$1</h4>')
-                          .replace(/\n/g, '<br>')
+              __html: result
+                          .replace(/&/g, '&amp;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;')
+                          .replace(/^# (.*$)/gm, '<h2 class="text-2xl font-bold text-gray-800 mt-6 mb-4">$1</h2>')
+                          .replace(/^## (.*$)/gm, '<h3 class="text-xl font-semibold text-gray-800 mt-5 mb-3">$1</h3>')
+                          .replace(/^### (.*$)/gm, '<h4 class="text-lg font-medium text-gray-800 mt-4 mb-2">$1</h4>')
                           .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-                          .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-                          .replace(/✅/g, '<span class="text-green-500">✅</span>')
-                          .replace(/⚠️/g, '<span class="text-yellow-500">⚠️</span>')
-                          .replace(/❌/g, '<span class="text-red-500">❌</span>')
+                          .replace(/^\* (.*$)/gm, '<li class="ml-6 list-disc">$1</li>')
+                          .replace(/^- (.*$)/gm, '<li class="ml-6 list-disc">$1</li>')
+                          .replace(/✅/g, '<span class="text-green-500 mr-2">✅</span>')
+                          .replace(/⚠️/g, '<span class="text-yellow-500 mr-2">⚠️</span>')
+                          .replace(/❌/g, '<span class="text-red-500 mr-2">❌</span>')
             }} />
           </div>
           

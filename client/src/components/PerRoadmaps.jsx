@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // Gemini API key (replace this with environment variable in production)
-const GEMINI_API_KEY = "AIzaSyDsBPaPGLsRr9FXNop3EgLpSwzvc-w_5wA";
+const GEMINI_API_KEY = "AIzaSyCiE7qt-qkDL6LyXQ7sax3nw3w8AucFWx8";
 
 const PersonalizedRoadmap = () => {
   const [topic, setTopic] = useState('');
