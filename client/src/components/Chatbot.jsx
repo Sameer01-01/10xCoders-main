@@ -4,7 +4,7 @@ import { MessageSquare, X, Send, Loader2, Minus, Maximize2 } from "lucide-react"
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Gemini API Configuration
-const API_KEY = "AIzaSyDsBPaPGLsRr9FXNop3EgLpSwzvc-w_5wA";
+const API_KEY = "AIzaSyCiE7qt-qkDL6LyXQ7sax3nw3w8AucFWx8";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 const Chatbot = () => {
